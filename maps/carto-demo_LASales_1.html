@@ -1,0 +1,99 @@
+      <!DOCTYPE html>
+<html>
+  <head>
+    <title>Demo Santa Monica sales 1 | CARTO</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,600,700|Open+Sans:300,400,600" rel="stylesheet">
+    <!-- Include Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
+    <link href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" rel="stylesheet">
+    <!-- Include CARTO.js -->
+    <script src="https://libs.cartocdn.com/carto.js/v4.1.11/carto.min.js"></script>
+    <link href="https://carto.com/developers/carto-js/examples/maps/public/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <div id="map"></div>
+    <aside class="toolbox">
+      <div class="box">
+        <header>
+          <h1>Range Filter</h1>
+          <button class="github-logo js-source-link"></button>
+        </header>
+
+        <section>
+
+          <div class="separator"></div>
+
+          <div id="controls">
+            <div id="info">
+              <h3>Sale Price</h3>
+            </div>
+            <div class="widget">
+              <p class="open-sans">Showing properties below and equal to <span class="js-price-placeholder">2900000$</span></p>
+            </div>
+            <input type="range" name="price" class="slider" min="90000" max="150000000" value="2900000" step="1" min-with-suffix="1€" max-with-suffix="60€">
+          </div>
+        </section>
+
+        <footer class="js-footer"></footer>
+      </div>
+    </aside>
+
+    <script>
+      const inputRange = document.querySelector('#controls input[type=range]');
+      inputRange.style.setProperty('--value', (inputRange.value - inputRange.min) / 0.59);
+
+      const pricePlaceholder = document.querySelector('#controls .js-price-placeholder');
+
+      function applyFilters (e) {
+        const maximumPrice = parseInt(e.target.value);
+
+        priceFilter.setFilters({ lte: maximumPrice });
+        pricePlaceholder.innerText = maximumPrice + "€";
+      }
+
+      function registerListeners () {
+        inputRange.addEventListener('input', e => {
+          inputRange.style.setProperty('--value', (inputRange.value - inputRange.min) / 0.59);
+        });
+
+        inputRange.addEventListener('change', e => {
+          applyFilters(e)
+        });
+      }
+
+      const map = L.map('map').setView([40.42252398976147, -3.659729361534119], 12);
+      map.scrollWheelZoom.disable();
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png', {
+        maxZoom: 18
+      }).addTo(map);
+
+      const client = new carto.Client({
+        apiKey: 'default_public',
+        username: 'cartojs-test'
+      });
+
+      const priceFilter = new carto.filter.Range('price', { lte: 40 });
+
+      const source = new carto.source.SQL('SELECT * FROM airbnb_listings');
+      source.addFilter(priceFilter);
+
+      const style = new carto.style.CartoCSS(`
+        #layer {
+          marker-width: 7;
+          marker-fill: #EE4D5A;
+          marker-line-color: #FFFFFF;
+          marker-fill: ramp([price], (#ffc6c4, #ee919b, #cc607d, #9e3963, #672044), quantiles);
+        }
+      `);
+      const layer = new carto.layer.Layer(source, style);
+
+      client.addLayer(layer);
+      client.getLeafletLayer().addTo(map);
+
+      registerListeners();
+    </script>
+  </body>
+</html>
