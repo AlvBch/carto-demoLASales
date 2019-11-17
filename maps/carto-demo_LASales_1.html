@@ -8,6 +8,9 @@
     <!-- Include Leaflet -->
     <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
     <link href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" rel="stylesheet">
+    <!-- Include Leaflet Draw plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.13/leaflet.draw.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.13/leaflet.draw.css" />
     <!-- Include CARTO.js -->
     <script src="https://libs.cartocdn.com/carto.js/v4.1.11/carto.min.js"></script>
     <link href="https://carto.com/developers/carto-js/examples/maps/public/style.css" rel="stylesheet">
@@ -17,42 +20,103 @@
     <aside class="toolbox">
       <div class="box">
         <header>
-          <h1>Range Filter</h1>
+          <h1>Sale Price Filter</h1>
           <button class="github-logo js-source-link"></button>
         </header>
 
         <section>
-
-          <div class="separator"></div>
-
-          <div id="controls">
-            <div id="info">
-              <h3>Sale Price</h3>
-            </div>
+		  <div id="controls">
             <div class="widget">
-              <p class="open-sans">Showing properties below and equal to <span class="js-price-placeholder">2900000$</span></p>
+              <p class="open-sans">Properties below and equal to <span class="js-price-placeholder">$</span></p>
             </div>
-            <input type="range" name="price" class="slider" min="90000" max="150000000" value="2900000" step="1" min-with-suffix="1€" max-with-suffix="60€">
+            <input type="range" name="price" class="slider" min="0" max="152000000" value="75000000" step="100000" min-with-suffix="90000$" max-with-suffix="151502000$">
           </div>
-        </section>
-
+		<div class="separator"></div>   
+		</section>
+		<header>
+			<h1>PopUp information</h1>
+		</header>
+		<section>
+			<div id="controls">
+				<div id="info">
+					<p class="open-sans">Select fields to show</p>
+				</div>
+				<ul>
+					<li>
+						<input type="checkbox" name="info[]" id="0" value="generalusetype" checked>
+						<label for="generalusetype">General Use</label>
+					</li>
+					<li>
+						<input type="checkbox" name="info[]" id="1" value="yearbuilt" checked>
+						<label for="yearbuilt">Year Built</label>
+					</li>
+					<li>
+						<input type="checkbox" name="info[]" id="2" value="size" checked>
+						<label for="size">Size</label>
+					</li>
+					<li>
+						<input type="checkbox" name="info[]" id="3" value="saleprice" checked>
+						<label for="saleprice">Sale Price</label>
+					</li>
+					<li>
+						<input type="checkbox" name="info[]" id="4" value="bedrooms">
+						<label for="bedrooms">Bedrooms</label>
+					</li>
+					<li>
+						<input type="checkbox" name="info[]" id="5" value="bathrooms">
+						<label for="bathrooms">Bathrooms</label>
+					</li>
+				</ul>
+          </div>
+		</section>		
         <footer class="js-footer"></footer>
       </div>
     </aside>
 
     <script>
+		// Map initial zoom and coordinates
+      const map = L.map('map').setView([34.023854, -118.471418], 14);
+
+		// mapbox Base map
+	  L.tileLayer('https://api.mapbox.com/styles/v1/abachiller/ck2ixlxoi2ri01cpfy9z032qk/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYWJhY2hpbGxlciIsImEiOiJjanNuNWg1NnowN3h2NDlwZXBnMmU1a3o1In0.03LyADdDX5oVTnfuHaZH4w', {
+		maxZoom: 20
+	  }).addTo (map);
+
+		// carto client
+      const client = new carto.Client({
+        username: 'alvbch',
+        apiKey: 'default_public'
+      });	
+	
+		// Input filters
       const inputRange = document.querySelector('#controls input[type=range]');
       inputRange.style.setProperty('--value', (inputRange.value - inputRange.min) / 0.59);
 
       const pricePlaceholder = document.querySelector('#controls .js-price-placeholder');
+      
+	  const inputCheckboxes = document.querySelectorAll('#controls input[type=checkbox]');
 
+		// Information options array
+	  const infoCheckbox = [];	  
+
+		// Fill information array
+	  function informationList () {
+			// Empty array
+		infoCheckbox.splice(0, infoCheckbox.length);
+		
+			// Fill array
+		inputCheckboxes.forEach(input => infoCheckbox.push(input.checked));
+		return infoCheckbox;
+	  }
+	  
       function applyFilters (e) {
         const maximumPrice = parseInt(e.target.value);
 
+        pricePlaceholder.innerText = maximumPrice + "$";
         priceFilter.setFilters({ lte: maximumPrice });
-        pricePlaceholder.innerText = maximumPrice + "€";
       }
 
+		// In case of change in the input
       function registerListeners () {
         inputRange.addEventListener('input', e => {
           inputRange.style.setProperty('--value', (inputRange.value - inputRange.min) / 0.59);
@@ -61,38 +125,208 @@
         inputRange.addEventListener('change', e => {
           applyFilters(e)
         });
+
+        inputCheckboxes.forEach(
+          input => input.addEventListener('click', () => informationList())
+        );
       }
 
-      const map = L.map('map').setView([40.42252398976147, -3.659729361534119], 12);
-      map.scrollWheelZoom.disable();
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png', {
-        maxZoom: 18
-      }).addTo(map);
+	  
+		// price filter
+      const priceFilter = new carto.filter.Range('saleprice', { lte: 75000000 });
 
-      const client = new carto.Client({
-        apiKey: 'default_public',
-        username: 'cartojs-test'
-      });
+		// data layers
+		// Sales data
+      const santaMonicaSource = new carto.source.SQL('SELECT * FROM santamonica_homes');
+		// Aply range filter
+      santaMonicaSource.addFilter(priceFilter);
 
-      const priceFilter = new carto.filter.Range('price', { lte: 40 });
-
-      const source = new carto.source.SQL('SELECT * FROM airbnb_listings');
-      source.addFilter(priceFilter);
-
-      const style = new carto.style.CartoCSS(`
+      const santaMonicaStyle = new carto.style.CartoCSS(`
         #layer {
-          marker-width: 7;
-          marker-fill: #EE4D5A;
-          marker-line-color: #FFFFFF;
-          marker-fill: ramp([price], (#ffc6c4, #ee919b, #cc607d, #9e3963, #672044), quantiles);
-        }
+			polygon-fill: ramp([saleprice], (#ffffb2, #fed976, #feb24c, #fd8d3c, #f03b20, #bd0026), quantiles);
+			polygon-comp-op: overlay;
+		}
+		#layer::outline {
+			line-width: 1;
+			line-color: #FFFFFF;
+			line-opacity: 0.5;
+		}
       `);
-      const layer = new carto.layer.Layer(source, style);
+      const santaMonicaLayer = new carto.layer.Layer(santaMonicaSource, santaMonicaStyle, {
+		featureOverColumns: ['saleprice', 'size', 'yearbuilt', 'sastr', 'saunit', 'generalusetype','bedrooms', 'bathrooms']
+	  });
+	  
+		// Public facilities data
+	  const publicFacilitiesSource = new carto.source.SQL('SELECT * FROM public_facilities');
+	  
+	  const publicFacilitiesStyle = new carto.style.CartoCSS(`
+		#layer {
+			polygon-fill: rgba(102, 0, 0, .5);
+			[zoom > 14]{
+				[type = "park"]{
+					marker-file:url(https://raw.github.com/mapbox/mapbox-gl-styles/master/sprites/basic-v9/_svg/park-11.svg);
+				}
+				[type = "parking"]{
+					marker-file:url(https://raw.github.com/mapbox/mapbox-gl-styles/master/sprites/basic-v9/_svg/car-15.svg);
+				}
+				[type = "school"]{
+					marker-file:url(https://s3.amazonaws.com/com.cartodb.users-assets.production/maki-icons/college-18.svg);
+				}
+				[type = "city"]{
+					marker-file:url(https://raw.github.com/mapbox/mapbox-gl-styles/master/sprites/basic-v9/_svg/attraction-15.svg);
+				}
+				[type = "library"]{
+					marker-file:url(https://raw.github.com/mapbox/mapbox-gl-styles/master/sprites/basic-v9/_svg/library-15.svg);
+				}
+				[type = "fire station"]{
+					marker-file:url(https://raw.github.com/mapbox/mapbox-gl-styles/master/sprites/basic-v9/_svg/fire-station-15.svg);
+				}
+				[type = "hospital"]{
+					marker-file:url(https://raw.github.com/mapbox/mapbox-gl-styles/master/sprites/basic-v9/_svg/hospital-15.svg);
+				}
+			}
+		}
+		#layer::outline {
+			line-width: 1;
+			line-color: #000000;
+			line-opacity: 0.8;
+		}
+	  `);
+	  const publicFacilitiesLayer = new carto.layer.Layer(publicFacilitiesSource, publicFacilitiesStyle);
+	  
+		// City boundaries data
+	  const cityBoundariesSource = new carto.source.SQL('SELECT * FROM city_boundaries where city_name like \'%anta%onica%\' and feat_type = \'Land\'');
+      
+      const cityBoundariesStyle = new carto.style.CartoCSS(`
+        #layer {
+			polygon-fill: #ba9e6d;
+			polygon-opacity: 0.1;
+		}
+		#layer::outline {
+			line-width: 1;
+			line-color: #000000;
+			line-opacity: 0.5;
+		}
+      `);
+      const cityBoundariesLayer = new carto.layer.Layer(cityBoundariesSource, cityBoundariesStyle);
 
-      client.addLayer(layer);
+		// Draw filter
+	  let drawControl = new L.Control.Draw({
+            draw: {
+                polygon: false,
+                polyline: false,
+                line: false,
+                marker: false,
+                rectangle: false,
+                circle: true,
+                circlemarker: false,
+            },
+            edit: false
+        });
+
+        // initialise the draw controls
+        map.addControl(drawControl);
+
+        // get radius and center of drawn circle and change santaMonicaSource of the CARTO layer
+        map.on(L.Draw.Event.CREATED, function (e) {
+            let layer = e.layer;
+            map.addLayer(layer);
+            let radius = layer.getRadius();
+            let centerLat = layer.getLatLng().lat;
+            let centerLng = layer.getLatLng().lng;
+            circleCountPointsIntersect(radius, centerLat, centerLng)
+		
+				//remove the selection circle
+			map.removeLayer(e.layer);
+        });
+
+        // function to change the santaMonicaSource of the CARTO layer based on radius and
+        // center of the circle
+        function circleCountPointsIntersect(radius, lat,lng){
+            santaMonicaSource.setQuery(`
+              SELECT *
+              FROM santamonica_homes
+              WHERE ST_intersects(
+                  the_geom,
+                  ST_Buffer(
+                    ST_SetSRID(ST_Point(${lng},${lat}),4326)::geography,
+                    ${radius})::geometry
+                  )
+                `);
+          };
+		  
+		// Information popup
+	  const popup = L.popup({ closeButton: true });
+
+      function openPopup(featureEvent) {
+		const data = featureEvent.data;
+		
+        let content = '<div class="widget">';
+
+			// popup content
+        if (data.sastr) {
+          content += `<h3 class="h3">${data.sastr}`;
+		  
+		  if (data.saunit != " ") {
+			content += `, ${data.saunit}`;
+		  }
+		  
+		  content += `</h3>`;
+        }
+
+        if (data.generalusetype || data.yearbuilt || data.size || data.saleprice || data.bedrooms || data.bathrooms) {
+          content += `<ul>`;
+
+          if (data.generalusetype && infoCheckbox[0]) {
+            content += `<li><strong>GENERAL USE:</strong><p class="open-sans">${data.generalusetype}</p></li>`;
+          }
+
+          if (data.yearbuilt && infoCheckbox[1]) {
+            content += `<li><strong>YEAR BUILT:</strong><p class="open-sans">${data.yearbuilt}</p></li>`;
+          }
+		  
+		  if (data.size && infoCheckbox[2]) {
+            content += `<li><strong>SIZE:</strong><p class="open-sans">${data.size} m<sup>2</sup></p></li>`;
+          }
+
+          if (data.saleprice && infoCheckbox[3]) {
+            content += `<li><strong>SALE PRICE:</strong><p class="open-sans">${data.saleprice} \$</p></li>`;
+          }
+		  
+          if (data.bedrooms && infoCheckbox[4]) {
+            content += `<li><strong>BEDROOMS:</strong><p class="open-sans">${data.bedrooms}</p></li>`;
+          }
+		  
+          if (data.bathrooms && infoCheckbox[5]) {
+            content += `<li><strong>BATHROOMS:</strong><p class="open-sans">${data.bathrooms}</p></li>`;
+          }		  
+
+          content += `</ul>`;
+        }
+
+        content += `</div>`;
+
+        popup.setContent(content);
+        popup.setLatLng(featureEvent.latLng);
+        if (!popup.isOpen()) {
+          popup.openOn(map);
+        }
+      }  
+
+	  
+	  function closePopup(featureEvent) {
+        popup.removeFrom(map);
+      }
+
+		// Add layers to map
+      client.addLayers([santaMonicaLayer, publicFacilitiesLayer, cityBoundariesLayer]);
       client.getLeafletLayer().addTo(map);
+	  
+		// Initialize tools
+	  santaMonicaLayer.on('featureClicked', openPopup);
 
+  	  informationList();
       registerListeners();
     </script>
   </body>
