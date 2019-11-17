@@ -38,15 +38,19 @@ It also has basic public facilities that can mean added value to the property.
 
 In this map you can:
 - navigate through the main frame map
+
 ![Main map](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/map.png)
 
 - activate and deactivate layers and consult leyends
+
 ![Leyend](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/leyend.png)
 
 - obtain property information by clicking on it
+
 ![PopUp information](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/popup.png)
 
 - consult sale price information and filter the data on display
+
 ![Widget](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/widget0.png)
 ![Widget - sale price filter](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/widget1.png)
 ![Widget - sale price filter - zoom](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/widget2.png)
@@ -57,15 +61,19 @@ This map shows the same data than the Basic one, but it has some javascript add-
 
 In this map you can:
 - Select properties by its position using the top left circle button
+
 ![Tool button](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/selectbutton.png)
 ![Making selection](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/selection.png)
 ![Result](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/selectionresult.png)
+
 To get back all the data you only have to make a filter big enought to put Santa Monica inside!
 
 - Filter poligons with a sale price of your interest
+
 ![Sale Price Filter](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/rangefilter.png)
 
 - Customize the information in the popup info tool
+
 ![PopUp Information Filter](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/infofilter.png)
 ![PopUp Information Example](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/popupfiltered.png)
 
