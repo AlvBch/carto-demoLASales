@@ -52,7 +52,9 @@ In this map you can:
 - consult sale price information and filter the data on display
 
 ![Widget](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/widget0.png)
+
 ![Widget - sale price filter](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/widget1.png)
+
 ![Widget - sale price filter - zoom](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/widget2.png)
 
 ### CARTO demo js
@@ -63,7 +65,9 @@ In this map you can:
 - Select properties by its position using the top left circle button
 
 ![Tool button](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/selectbutton.png)
+
 ![Making selection](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/selection.png)
+
 ![Result](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/selectionresult.png)
 
 To get back all the data you only have to make a filter big enought to put Santa Monica inside!
@@ -75,6 +79,7 @@ To get back all the data you only have to make a filter big enought to put Santa
 - Customize the information in the popup info tool
 
 ![PopUp Information Filter](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/infofilter.png)
+
 ![PopUp Information Example](https://raw.githubusercontent.com/AlvBch/carto-demoLASales/master/resources/popupfiltered.png)
 
 
